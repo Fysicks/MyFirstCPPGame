@@ -111,9 +111,11 @@ void ASlashCharacter::EKeyPressed() {
 		if (CanDisarm()) {
 			PlayEquipMontage(FName("Unequip"));
 			CharacterState = ECharacterState::ECS_Unequipped;
+			ActionState = EActionState::EAS_Equipping;
 		}else if (CanArm()) {
 			PlayEquipMontage(FName("Equip"));
 			CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+			ActionState = EActionState::EAS_Equipping;
 		}
 	}
 }
@@ -176,6 +178,22 @@ bool ASlashCharacter::CanArm() {
 		return true;
 	}
 	return false;
+}
+
+void ASlashCharacter::Disarm() {
+	if (EquippedWeapon) {
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
+	}
+}
+
+void ASlashCharacter::Arm() {
+	if (EquippedWeapon) {
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandSocket"));
+	}
+}
+
+void ASlashCharacter::FinishEquipping() {
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 void ASlashCharacter::Dodge() {

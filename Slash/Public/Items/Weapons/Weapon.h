@@ -15,6 +15,7 @@ class SLASH_API AWeapon : public AItem
 	GENERATED_BODY()
 public:
 	void Equip(USceneComponent* InParent, FName InSocketName);
+	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 protected:
 	// These functions don't need UFUNCTION because that function is inherited from Item class
 	// These are also overrides of the versions in Item

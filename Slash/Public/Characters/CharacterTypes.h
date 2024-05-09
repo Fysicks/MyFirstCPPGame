@@ -11,5 +11,6 @@ UENUM(BlueprintType)
 enum class EActionState : uint8 {
 	// Convention is to prepend the capital letters of enum name to all enums 
 	EAS_Unoccupied UMETA(DisplayName = "Unoccupied"),
-	EAS_Attacking UMETA(DisplayName = "Attacking")
+	EAS_Attacking UMETA(DisplayName = "Attacking"),
+	EAS_Equipping UMETA(DisplayName = "Equipping_Weapon")
 };
