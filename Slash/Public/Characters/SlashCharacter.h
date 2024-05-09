@@ -16,6 +16,7 @@ class UCameraComponent;
 class UGroomComponent; // Had to add "Niagara" to dependencies to get to work
 class AItem;
 class UAnimMontage;
+class AWeapon;
 
 UCLASS()
 class SLASH_API ASlashCharacter : public ACharacter
@@ -73,9 +74,12 @@ protected:
 	* Play Montage Functions
 	*/
 	void PlayAttackMontage();
+	void PlayEquipMontage(FName SectionName);
 	UFUNCTION(BLueprintCallable)
 	void AttackEnd();
 	bool CanAttack();
+	bool CanDisarm();
+	bool CanArm();
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -99,11 +103,17 @@ private:
 	UPROPERTY(VisibleInstanceOnly);
 	AItem* OverlappingItem;
 
+	UPROPERTY(VisibleAnywhere, Category = Weapon);
+	AWeapon* EquippedWeapon;
+
 	/**
 	* Animation Montages
 	*/
 	UPROPERTY(EditDefaultsOnly, Category = Montages);
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages);
+	UAnimMontage* EquipMontage;
 
 public: // Setters and getters
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
