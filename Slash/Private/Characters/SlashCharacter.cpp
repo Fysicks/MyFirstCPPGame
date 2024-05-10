@@ -12,6 +12,7 @@
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 ASlashCharacter::ASlashCharacter()
@@ -64,6 +65,12 @@ void ASlashCharacter::BeginPlay()
 		}
 	}
 	
+}
+
+void ASlashCharacter::SetWeaponCollision(ECollisionEnabled::Type CollisionEnabled) {
+	if (EquippedWeapon && EquippedWeapon->GetWeaponBox()) {
+		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +134,15 @@ void ASlashCharacter::Attack() {
 	}
 }
 
+void ASlashCharacter::Dodge() {
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/////
+/////	Attack Montages And Helpers
+/////
+////////////////////////////////////////////////////////////////////////////////
+
 void ASlashCharacter::PlayAttackMontage() {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && AttackMontage) {
@@ -146,6 +162,8 @@ void ASlashCharacter::PlayAttackMontage() {
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
 }
+
+
 
 void ASlashCharacter::PlayEquipMontage(FName SectionName) {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -195,10 +213,6 @@ void ASlashCharacter::Arm() {
 void ASlashCharacter::FinishEquipping() {
 	ActionState = EActionState::EAS_Unoccupied;
 }
-
-void ASlashCharacter::Dodge() {
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -14,7 +14,7 @@ AWeapon::AWeapon() {
 	WeaponBox->SetBoxExtent(FVector(2.5, 1.75, 40.f));
 
 	// Setting collision presets
-	WeaponBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); // So there's no collision when just running around
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	
@@ -66,6 +66,11 @@ void AWeapon::EndSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	const FVector Start = BoxTraceStart->GetComponentLocation();
 	const FVector End = BoxTraceEnd->GetComponentLocation();
+
+	/** TArray is UnrealEngine's built in array type. Reason to use is because it
+	* can be dynamic. It also has AddUnique which is a smarter Add. Also has 
+	* Empty function to clear out array
+	*/
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this); // not really necessary since there is a bIgnoreSelf for this function
 	FHitResult BoxHit; // Will get populated with data from box trace hit
