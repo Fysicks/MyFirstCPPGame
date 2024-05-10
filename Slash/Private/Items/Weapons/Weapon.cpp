@@ -4,6 +4,7 @@
 #include "Items/Weapons/Weapon.h"
 #include "Characters/SlashCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SphereComponent.h"
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName) {
 	AttachMeshToSocket(InParent, InSocketName);
@@ -14,6 +15,9 @@ void AWeapon::Equip(USceneComponent* InParent, FName InSocketName) {
 			EquipSound,
 			GetActorLocation()
 		);
+	}
+	if (Sphere) {
+		Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 
