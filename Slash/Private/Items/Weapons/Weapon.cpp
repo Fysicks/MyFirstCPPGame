@@ -74,6 +74,9 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	*/
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this); // not really necessary since there is a bIgnoreSelf for this function
+	for (AActor* Actor : IgnoreActors) {
+		ActorsToIgnore.AddUnique(Actor);
+	}
 	FHitResult BoxHit; // Will get populated with data from box trace hit
 
 	UKismetSystemLibrary::BoxTraceSingle(
@@ -94,5 +97,6 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		if (HitInterface) {
 			HitInterface->GetHit(BoxHit.Location);
 		}
+		IgnoreActors.AddUnique(BoxHit.GetActor());
 	}
 }
