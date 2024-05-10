@@ -7,6 +7,9 @@
 #include "Interfaces/HitInterface.h"
 #include "Enemy.generated.h"
 
+// Forward delcarations
+class UAnimMontage;
+
 UCLASS()
 class SLASH_API AEnemy : public ACharacter, public IHitInterface
 {
@@ -27,6 +30,18 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	/**
+	* Play Montage Functions
+	*/
+	void PlayHitReactMontage(FName SectionName);
+
+private:
+	/**
+	* Animation Montages
+	*/
+	UPROPERTY(EditDefaultsOnly, Category = Montages);
+	UAnimMontage* HitReactMontage;
 
 public:	
 	

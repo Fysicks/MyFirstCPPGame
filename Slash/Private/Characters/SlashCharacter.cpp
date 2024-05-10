@@ -51,7 +51,6 @@ ASlashCharacter::ASlashCharacter()
 	// Enabling auto possession for the pawn
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 	
-
 }
 
 // Called when the game starts or when spawned
@@ -162,8 +161,6 @@ void ASlashCharacter::PlayAttackMontage() {
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
 }
-
-
 
 void ASlashCharacter::PlayEquipMontage(FName SectionName) {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
