@@ -3,10 +3,18 @@
 
 #include "Items/Weapons/Weapon.h"
 #include "Characters/SlashCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName) {
 	AttachMeshToSocket(InParent, InSocketName);
 	ItemState = EItemState::EIS_Equipped;
+	if (EquipSound) {
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquipSound,
+			GetActorLocation()
+		);
+	}
 }
 
 void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName) {
