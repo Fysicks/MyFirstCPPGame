@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Slash/DebugMacros.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -51,8 +52,21 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
-void AEnemy::GetHit(const FVector& ImpactPoint) {
+void AEnemy::GetHit_Implementation(const FVector& ImpactPoint) {
 	DirectionalHitReact(ImpactPoint);
+	if (HitSound) {
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			HitSound,
+			ImpactPoint
+		);
+	}
+
+	if (HitParticles){
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitParticles, ImpactPoint);
+	}
+	
+
 }
 
 void AEnemy::DirectionalHitReact(const FVector& ImpactPoint) {
@@ -68,6 +82,7 @@ void AEnemy::DirectionalHitReact(const FVector& ImpactPoint) {
 	if (CrossProduct.Z < 0.f) {
 		Angle *= -1.f;
 	}
+	/**
 	UKismetSystemLibrary::DrawDebugArrow(this, GetActorLocation(), GetActorLocation() + CrossProduct * 100.f, 5.f, FColor::Purple, 5.f);
 
 	if (GEngine) {
@@ -75,6 +90,7 @@ void AEnemy::DirectionalHitReact(const FVector& ImpactPoint) {
 	}
 	UKismetSystemLibrary::DrawDebugArrow(this, GetActorLocation(), GetActorLocation() + Forward * 60.f, 5.f, FColor::Red, 5.f);
 	UKismetSystemLibrary::DrawDebugArrow(this, GetActorLocation(), GetActorLocation() + ToHit * 60.f, 5.f, FColor::Green, 5.f);
+	*/
 	FName Section("FromBack");
 	if (Angle >= -45.f && Angle < 45.f) {
 		Section = (FName("FromFront"));
