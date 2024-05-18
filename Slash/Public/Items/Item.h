@@ -8,6 +8,7 @@
 
 // Forard declarations
 class USphereComponent;
+class UNiagaraComponent;
 
 // Enums
 enum class EItemState : uint8 {
@@ -26,6 +27,7 @@ public:
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -60,11 +62,12 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* Sphere;
 
+	UPROPERTY(VisibleAnywhere)
+	UNiagaraComponent* EmbersEffect;
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"));
 	float RunningTime;
-
-	
 
 };
 
