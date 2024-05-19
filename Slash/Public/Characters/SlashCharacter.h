@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "BaseCharacter.h"
 #include "InputActionValue.h" // Needed for FInputActionValue
 #include "CharacterTypes.h"
 #include "SlashCharacter.generated.h"
@@ -16,33 +16,24 @@ class UCameraComponent;
 class UGroomComponent; // Had to add "Niagara" to dependencies to get to work
 class AItem;
 class UAnimMontage;
-class AWeapon;
 
 UCLASS()
-class SLASH_API ASlashCharacter : public ACharacter
+class SLASH_API ASlashCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ASlashCharacter();
-
-	// Jump function override
 	virtual void Jump() override;
-
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponCollision(ECollisionEnabled::Type CollisionEnabled);
-
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	/**
+	* Input Mapping Context and Input Actions
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputMappingContext* SlashContext;
 
@@ -70,35 +61,38 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void EKeyPressed();
-	virtual void Attack();
+	virtual void Attack() override;
 	void Dodge();
 
 	/** 
-	* Play Montage Functions
+	* Play Montage Functions and Helpers
 	*/
-	void PlayAttackMontage();
+	virtual void AttackEnd() override;
+	virtual bool CanAttack() override;
+
 	void PlayEquipMontage(FName SectionName);
-	UFUNCTION(BLueprintCallable)
-	void AttackEnd();
-	bool CanAttack();
 	bool CanDisarm();
 	bool CanArm();
-
 	UFUNCTION(BlueprintCallable)
 	void Disarm();
 	UFUNCTION(BlueprintCallable)
 	void Arm();
-
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
 
 private:
+	/**
+	* States
+	*/
 	UPROPERTY(VisibleAnywhere)
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
 
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
+	/**
+	* Components
+	*/
 	UPROPERTY(VisibleAnywhere);
 	USpringArmComponent* CameraBoom;
 
@@ -114,15 +108,9 @@ private:
 	UPROPERTY(VisibleInstanceOnly);
 	AItem* OverlappingItem;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon);
-	AWeapon* EquippedWeapon;
-
 	/**
 	* Animation Montages
 	*/
-	UPROPERTY(EditDefaultsOnly, Category = Montages);
-	UAnimMontage* AttackMontage;
-
 	UPROPERTY(EditDefaultsOnly, Category = Montages);
 	UAnimMontage* EquipMontage;
 
