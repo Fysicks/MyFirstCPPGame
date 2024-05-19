@@ -148,16 +148,25 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (CombatTarget && HealthBarWidget) {
+	CheckCombatTarget();
+
+	CheckPatrolTarget();
+}
+
+void AEnemy::CheckPatrolTarget() {
+	if (InTargetRange(PatrolTarget, PatrolRadius)) {
+		PatrolTarget = ChoosePatrolTarget();
+		const float WaitTime = FMath::RandRange(WaitMin, WaitMax);
+		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished, WaitTime);
+	}
+}
+
+void AEnemy::CheckCombatTarget() {
+	if (HealthBarWidget) {
 		if (!InTargetRange(CombatTarget, CombatRadius)) {
 			CombatTarget = nullptr;
 			HealthBarWidget->SetVisibility(false);
 		}
-	}
-
-	if (InTargetRange(PatrolTarget, PatrolRadius)) {
-		PatrolTarget = ChoosePatrolTarget();
-		GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished, 5.f);
 	}
 }
 
