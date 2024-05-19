@@ -26,3 +26,11 @@ enum class EDeathPose : uint8 {
 	EDP_Death5 UMETA(Display_name = "Death5"),
 	EDP_Death6 UMETA(Display_name = "Death6")
 };
+
+UENUM(BlueprintType)
+enum class EEnemyState : uint8 {
+	// Convention is to prepend the capital letters of enum name to all enums 
+	EES_Patroling UMETA(DisplayName = "Patrolling"),
+	EES_Chasing UMETA(DisplayName = "Chasing"),
+	EES_Attacking UMETA(DisplayName = "Attacking")
+};

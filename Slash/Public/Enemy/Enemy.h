@@ -9,9 +9,10 @@
 #include "Enemy.generated.h"
 
 // Forward delcarations
-class UAnimMontage;
 class UAttributeComponent;
 class UHealthBarComponent;
+class UPawnSensingComponent;
+class UAnimMontage;
 class AAIController;
 
 
@@ -47,6 +48,8 @@ protected:
 	bool InTargetRange(AActor* Target, double Radius);
 	void MoveToTarget(AActor* Target);
 	AActor* ChoosePatrolTarget();
+	UFUNCTION()
+	void PawnSeen(APawn* SeenPawn);
 
 	/**
 	* Play Montage Functions
@@ -57,11 +60,17 @@ protected:
 	EDeathPose DeathPose = EDeathPose::EDP_Alive;
 
 private:
+	/**
+	* Components
+	*/
 	UPROPERTY(VisibleAnywhere)
 	UAttributeComponent* Attributes;
 
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
+
+	UPROPERTY(VisibleAnywhere)
+	UPawnSensingComponent* PawnSensing;
 	
 	/**
 	* Animation Montages
@@ -83,6 +92,9 @@ private:
 
 	UPROPERTY(EditAnywhere);
 	double CombatRadius = 500.f;
+
+	UPROPERTY(EditAnywhere)
+	double AttackRadius = 150.f;
 
 	/**
 	* Navigation
@@ -107,6 +119,13 @@ private:
 	float WaitMin = 5.f;
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
 	float WaitMax = 10.f;
+
+	EEnemyState EnemyState = EEnemyState::EES_Patroling;
+
+	UPROPERTY(EditAnywhere, Category = "Movement Speeds")
+	float WalkSpeed = 125.f;
+	UPROPERTY(EditAnywhere, Category = "Movement Speeds")
+	float RunSpeed = 300.f;
 
 public:	
 	
