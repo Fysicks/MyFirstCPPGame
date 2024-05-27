@@ -14,6 +14,9 @@ ABaseCharacter::ABaseCharacter()
 
 	// Setting up attributes
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attributes"));
+	// Never want characters to block the camera
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
 }
 
 void ABaseCharacter::BeginPlay()
@@ -22,7 +25,19 @@ void ABaseCharacter::BeginPlay()
 	
 }
 
+void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) {
+	if (IsAlive() && Hitter) {
+		DirectionalHitReact(Hitter->GetActorLocation());
+	} else { Die(); }
+
+	PlayHitSound(ImpactPoint);
+	SpawnHitParticles(ImpactPoint);
+}
+
 void ABaseCharacter::Attack() {
+	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
+		CombatTarget = nullptr;
+	}
 }
 
 bool ABaseCharacter::CanAttack() {
@@ -33,7 +48,14 @@ bool ABaseCharacter::IsAlive() {
 	return Attributes && Attributes->IsAlive();
 }
 
+void ABaseCharacter::DisableMeshCollision() {
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
 void ABaseCharacter::Die() {
+	Tags.Add(FName("Dead"));
+	PlayDeathMontage();
+	SetWeaponCollision(ECollisionEnabled::NoCollision);
 }
 
 void ABaseCharacter::PlayHitReactMontage(FName SectionName) {
@@ -111,7 +133,37 @@ int32 ABaseCharacter::PlayAttackMontage() {
 }
 
 int32 ABaseCharacter::PlayDeathMontage() {
-	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+	TEnumAsByte<EDeathPose> Pose(Selection);
+	if (Pose < EDeathPose::EDP_Max) {
+		DeathPose = Pose;
+	}
+	return Selection;
+}
+
+void ABaseCharacter::StopAttackMontage() {
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance) {
+		AnimInstance->Montage_Stop(0.24f, AttackMontage);
+	}
+}
+
+FVector ABaseCharacter::GetTranslationWarpTarget() {
+	if (CombatTarget == nullptr) return FVector();
+	const FVector CombatTargetLocation = CombatTarget->GetActorLocation();
+	const FVector Location = GetActorLocation();
+
+	FVector TargetToMe = (Location - CombatTargetLocation).GetSafeNormal();
+	TargetToMe *= WarpTargetDistance;
+
+	return CombatTargetLocation + TargetToMe;
+}
+
+FVector ABaseCharacter::GetRotationWarpTarget() {
+	if (CombatTarget) {
+		return CombatTarget->GetActorLocation();
+	}
+	return FVector();
 }
 
 void ABaseCharacter::DisableCapsule() {

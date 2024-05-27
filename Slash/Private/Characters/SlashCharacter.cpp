@@ -1,24 +1,38 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Characters/SlashCharacter.h"
-#include "Components/InputComponent.h"
+#include "Items/Weapons/Weapon.h"
+#include "Items/Item.h"
+#include "Items/Soul.h"
+#include "Items/Treasure.h"
+
+/* Input */
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+
+/* Components */
 #include "GroomComponent.h"
-#include "Items/Item.h"
-#include "Items/Weapons/Weapon.h"
+#include "Camera/CameraComponent.h"
+#include "Components/InputComponent.h"
+#include "Components/AttributeComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+/* Misc */
 #include "Animation/AnimMontage.h"
-#include "Components/BoxComponent.h"
+
+/* Overlay */
+#include "HUD/SlashHUD.h"
+#include "HUD/SlashOverlay.h"
+
+
 
 // Sets default values
 ASlashCharacter::ASlashCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	// Overwriting defaults
 	bUseControllerRotationPitch = false;
@@ -28,6 +42,13 @@ ASlashCharacter::ASlashCharacter()
 	// Making character move based on direction walking
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
+
+	// Setting character up to participate in combat
+	GetMesh()->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
+	GetMesh()->SetGenerateOverlapEvents(true);
 
 	// Adding spring arm
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -62,16 +83,61 @@ void ASlashCharacter::BeginPlay()
 			Subsystem->AddMappingContext(SlashContext, 0);
 		}
 	}
-
-	Tags.Add(FName("SlashCharacter"));
-	
+	Tags.Add(FName("EngageableTarget"));
+	InitializeSlashOverlay();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/////
-/////	Enhanced Input Movement Functions
-/////
-////////////////////////////////////////////////////////////////////////////////
+void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
+		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Move);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Look);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Jump);
+		EnhancedInputComponent->BindAction(EKeyAction, ETriggerEvent::Triggered, this, &ASlashCharacter::EKeyPressed);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Attack);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Dodge);
+	}
+
+}
+
+float ASlashCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
+	HandleDamage(DamageAmount);
+	SetHUDHealth();
+	return DamageAmount;
+}
+
+void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) {
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
+
+	SetWeaponCollision(ECollisionEnabled::NoCollision);
+	if (Attributes && Attributes->GetHealthPercent() > 0.f) {
+		ActionState = EActionState::EAS_HitReaction;
+	}
+}
+
+void ASlashCharacter::SetOverlappingItem(AItem* Item) {
+	OverlappingItem = Item;
+}
+
+void ASlashCharacter::AddSouls(ASoul* Soul) {
+	if (Attributes && SlashOverlay) {
+		Attributes->AddSouls(Soul->GetSouls());
+		SlashOverlay->SetSouls(Attributes->GetSouls());
+	}
+}
+
+void ASlashCharacter::AddGold(ATreasure* Treasure) {
+	if (Attributes) {
+		Attributes->AddGold(Treasure->GetGold());
+		SlashOverlay->SetGold(Attributes->GetGold());
+	}
+}
+
+/* 
+* Enhanced Input Movement Functions
+*/
 void ASlashCharacter::Move(const FInputActionValue& Value) {
 	
 	if (ActionState == EActionState::EAS_Unoccupied) {
@@ -97,27 +163,22 @@ void ASlashCharacter::Look(const FInputActionValue& Value) {
 	}
 }
 
-void ASlashCharacter::Jump() {
-	Super::Jump();
-}
-
 void ASlashCharacter::EKeyPressed() {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon) {
-		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-		OverlappingItem = nullptr; // So we don't try to equip weapon that's already equipped
-		EquippedWeapon = OverlappingWeapon;
+		EquipWeapon(OverlappingWeapon);
 	} else {
 		if (CanDisarm()) {
-			PlayEquipMontage(FName("Unequip"));
-			CharacterState = ECharacterState::ECS_Unequipped;
-			ActionState = EActionState::EAS_Equipping;
+			Disarm();
 		}else if (CanArm()) {
-			PlayEquipMontage(FName("Equip"));
-			CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-			ActionState = EActionState::EAS_Equipping;
+			Arm();
 		}
+	}
+}
+
+void ASlashCharacter::Jump() {
+	if (IsUnoccpuied()) {
+		Super::Jump();
 	}
 }
 
@@ -132,11 +193,9 @@ void ASlashCharacter::Attack() {
 void ASlashCharacter::Dodge() {
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/////
-/////	Attack Montages And Helpers
-/////
-////////////////////////////////////////////////////////////////////////////////
+/* 
+* Attack Montages and Helpers
+*/
 
 void ASlashCharacter::PlayEquipMontage(FName SectionName) {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -146,12 +205,29 @@ void ASlashCharacter::PlayEquipMontage(FName SectionName) {
 	}
 }
 
+void ASlashCharacter::EquipWeapon(AWeapon* Weapon) {
+	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	OverlappingItem = nullptr; // So we don't try to equip weapon that's already equipped
+	EquippedWeapon = Weapon;
+}
+
 void ASlashCharacter::AttackEnd() {
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
 bool ASlashCharacter::CanAttack() {
 	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;;
+}
+
+void ASlashCharacter::Die() {
+	Super::Die();
+	ActionState = EActionState::EAS_Dead;
+	DisableMeshCollision();
+
+	DisableCapsule();
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	SetWeaponCollision(ECollisionEnabled::NoCollision);
 }
 
 bool ASlashCharacter::CanDisarm() {
@@ -171,13 +247,29 @@ bool ASlashCharacter::CanArm() {
 	return false;
 }
 
+bool ASlashCharacter::IsUnoccpuied() {
+	return ActionState == EActionState::EAS_Unoccupied;
+}
+
 void ASlashCharacter::Disarm() {
+	PlayEquipMontage(FName("Unequip"));
+	CharacterState = ECharacterState::ECS_Unequipped;
+	ActionState = EActionState::EAS_Equipping;
+}
+
+void ASlashCharacter::Arm() {
+	PlayEquipMontage(FName("Equip"));
+	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	ActionState = EActionState::EAS_Equipping;
+}
+
+void ASlashCharacter::AttachWeaponToBack() {
 	if (EquippedWeapon) {
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
 	}
 }
 
-void ASlashCharacter::Arm() {
+void ASlashCharacter::AttachWeaponToHand() {
 	if (EquippedWeapon) {
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandSocket"));
 	}
@@ -187,27 +279,28 @@ void ASlashCharacter::FinishEquipping() {
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-// Called every frame
-void ASlashCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
+void ASlashCharacter::HitReactEnd() {
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
-// Called to bind functionality to input
-void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
-		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Move);
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Look);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Jump);
-		EnhancedInputComponent->BindAction(EKeyAction, ETriggerEvent::Triggered, this, &ASlashCharacter::EKeyPressed);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Attack);
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Dodge);
+void ASlashCharacter::InitializeSlashOverlay() {
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController) {
+		ASlashHUD* SlashHUD = Cast<ASlashHUD>(PlayerController->GetHUD());
+		if (SlashHUD) {
+			SlashOverlay = SlashHUD->GetSlashOverlay();
+			if (SlashOverlay && Attributes) {
+				SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+				SlashOverlay->SetStaminaBarPercent(1.f);
+				SlashOverlay->SetGold(0);
+				SlashOverlay->SetSouls(0);
+			}
+		}
 	}
+}
 
+void ASlashCharacter::SetHUDHealth() {
+	if (SlashOverlay && Attributes) {
+		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
 }
