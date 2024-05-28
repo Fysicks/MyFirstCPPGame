@@ -12,7 +12,6 @@ void ASlashHUD::PostInitializeComponents() {
 		APlayerController* Controller = World->GetFirstPlayerController();
 		if (Controller && SlashOverlayClass) {
 			SlashOverlay = CreateWidget<USlashOverlay>(Controller, SlashOverlayClass);
-			UE_LOG(LogTemp, Warning, TEXT("SlashOverlay set"));
 			SlashOverlay->AddToViewport();
 		}
 	}

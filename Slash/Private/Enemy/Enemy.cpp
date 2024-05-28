@@ -4,6 +4,7 @@
 #include "Enemy/Enemy.h"
 #include "AIController.h"
 #include "Items/Weapons/Weapon.h"
+#include "Items/Soul.h"
 
 /* Components */
 #include "HUD/HealthBarComponent.h"
@@ -95,12 +96,27 @@ void AEnemy::BeginPlay()
 * Base Character Overrides
 */
 void AEnemy::Die() {
-	Super::Die();
 	EnemyState = EEnemyState::EES_Dead;
+	Super::Die();
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
 	SetLifeSpan(DeathLifeSpan);
+	SetWeaponCollision(ECollisionEnabled::NoCollision);
+	SpawnSoul();
+}
+
+void AEnemy::SpawnSoul() {
+	UWorld* World = GetWorld();
+	if (World && SoulClass && Attributes) {
+		const FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, 25.f);
+		ASoul* SpawnedSoul = World->SpawnActor<ASoul>(SoulClass, GetActorLocation(), GetActorRotation());
+		if (SpawnedSoul) {
+			SpawnedSoul->SetSouls(Attributes->GetSouls());
+		} else {
+			UE_LOG(LogTemp, Warning, TEXT("Wtf it didn't work"))
+		}
+	}
 }
 
 void AEnemy::Attack() {

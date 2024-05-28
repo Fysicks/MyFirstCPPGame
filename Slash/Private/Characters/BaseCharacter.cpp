@@ -141,6 +141,10 @@ int32 ABaseCharacter::PlayDeathMontage() {
 	return Selection;
 }
 
+void ABaseCharacter::PlayDodgeMontage() {
+	PlayMontageSection(DodgeMontage, FName("Default"));
+}
+
 void ABaseCharacter::StopAttackMontage() {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance) {
@@ -171,6 +175,9 @@ void ABaseCharacter::DisableCapsule() {
 }
 
 void ABaseCharacter::AttackEnd() {
+}
+
+void ABaseCharacter::DodgeEnd() {
 }
 
 void ABaseCharacter::Tick(float DeltaTime)

@@ -14,6 +14,7 @@ enum class EActionState : uint8 {
 	EAS_HitReaction UMETA(DisplayName = "HitReaction"),
 	EAS_Attacking UMETA(DisplayName = "Attacking"),
 	EAS_Equipping UMETA(DisplayName = "Equipping_Weapon"),
+	EAS_Dodging UMETA(DisplayName = "Dodging"),
 	EAS_Dead UMETA(DisplayName = "Dead")
 };
 

@@ -29,6 +29,8 @@ class SLASH_API ASlashCharacter : public ABaseCharacter, public IPickupInterface
 public:
 
 	ASlashCharacter();
+	virtual void Tick(float DeltaTime) override;
+
 	/* <AActor> */
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	/* </AActor> */
@@ -87,8 +89,11 @@ protected:
 	*/
 	void EquipWeapon(AWeapon* Weapon);
 	virtual void AttackEnd() override;
+	virtual void DodgeEnd() override;
 	virtual bool CanAttack() override;
 	virtual void Die() override;
+	bool HasEnoughStamina();
+	bool IsOccupied();
 	void PlayEquipMontage(FName SectionName);
 	bool CanDisarm();
 	bool CanArm();

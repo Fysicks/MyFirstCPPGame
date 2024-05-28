@@ -31,8 +31,7 @@
 // Sets default values
 ASlashCharacter::ASlashCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	// Overwriting defaults
 	bUseControllerRotationPitch = false;
@@ -71,6 +70,13 @@ ASlashCharacter::ASlashCharacter()
 	// Enabling auto possession for the pawn
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 	
+}
+
+void ASlashCharacter::Tick(float DeltaTime) {
+	if (Attributes && SlashOverlay) {
+		Attributes->RegenStamina(DeltaTime);
+		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
 }
 
 // Called when the game starts or when spawned
@@ -191,6 +197,13 @@ void ASlashCharacter::Attack() {
 }
 
 void ASlashCharacter::Dodge() {
+	if (IsOccupied() || !HasEnoughStamina()) { return; }
+	PlayDodgeMontage();
+	ActionState = EActionState::EAS_Dodging;
+	if (Attributes && SlashOverlay) {
+		Attributes->UseStamina(Attributes->GetDodgeCost());
+		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
 }
 
 /* 
@@ -213,6 +226,12 @@ void ASlashCharacter::EquipWeapon(AWeapon* Weapon) {
 }
 
 void ASlashCharacter::AttackEnd() {
+	Super::AttackEnd();
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void ASlashCharacter::DodgeEnd() {
+	Super::DodgeEnd();
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
@@ -228,6 +247,14 @@ void ASlashCharacter::Die() {
 	DisableCapsule();
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollision(ECollisionEnabled::NoCollision);
+}
+
+bool ASlashCharacter::HasEnoughStamina() {
+	return Attributes && Attributes->GetStamina() > Attributes->GetDodgeCost();
+}
+
+bool ASlashCharacter::IsOccupied() {
+	return ActionState != EActionState::EAS_Unoccupied;
 }
 
 bool ASlashCharacter::CanDisarm() {
