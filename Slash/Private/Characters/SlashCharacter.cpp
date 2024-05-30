@@ -239,8 +239,8 @@ bool ASlashCharacter::CanAttack() {
 	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;;
 }
 
-void ASlashCharacter::Die() {
-	Super::Die();
+void ASlashCharacter::Die_Implementation() {
+	Super::Die_Implementation();
 	ActionState = EActionState::EAS_Dead;
 	DisableMeshCollision();
 

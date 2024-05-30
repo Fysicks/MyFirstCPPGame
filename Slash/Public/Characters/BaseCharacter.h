@@ -32,7 +32,9 @@ protected:
 	*/
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void Attack();
-	virtual void Die();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void Die();
 	void DirectionalHitReact(const FVector& ImpactPoint);
 	virtual void HandleDamage(float DamageAmount);
 	void PlayHitSound(const FVector& ImpactPoint);
@@ -86,10 +88,10 @@ private:
 	/**
 	* Sounds/Particles
 	*/
-	UPROPERTY(EditAnywhere, Category = Sounds);
+	UPROPERTY(EditAnywhere, Category = Combat);
 	USoundBase* HitSound;
 
-	UPROPERTY(EditAnywhere, Category = VisualEffects);
+	UPROPERTY(EditAnywhere, Category = Combat);
 	UParticleSystem* HitParticles;
 
 	/**

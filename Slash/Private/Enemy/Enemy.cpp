@@ -77,6 +77,10 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) {
 	ClearAttackTimer();
 	StopAttackMontage();
 	SetWeaponCollision(ECollisionEnabled::NoCollision);
+
+	if (IsInsideAttackRadius() && !IsDead()) {
+		StartAttackTimer();
+	}
 }
 
 void AEnemy::BeginPlay()
@@ -95,9 +99,9 @@ void AEnemy::BeginPlay()
 /* 
 * Base Character Overrides
 */
-void AEnemy::Die() {
+void AEnemy::Die_Implementation() {
 	EnemyState = EEnemyState::EES_Dead;
-	Super::Die();
+	Super::Die_Implementation();
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
@@ -267,7 +271,7 @@ void AEnemy::MoveToTarget(AActor* Target) {
 	if(EnemyController == nullptr || Target == nullptr) return;
 	FAIMoveRequest MoveRequest;
 	MoveRequest.SetGoalActor(Target);
-	MoveRequest.SetAcceptanceRadius(50.f);
+	MoveRequest.SetAcceptanceRadius(AcceptanceRadius);
 	EnemyController->MoveTo(MoveRequest);
 }
 
@@ -291,7 +295,7 @@ void AEnemy::SpawnDefaultWeapon() {
 	UWorld* World = GetWorld();
 	if (GetWorld() && WeaponClass) {
 		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+		DefaultWeapon->Equip(GetMesh(), FName("WeaponSocket"), this, this);
 		EquippedWeapon = DefaultWeapon;
 	}
 }

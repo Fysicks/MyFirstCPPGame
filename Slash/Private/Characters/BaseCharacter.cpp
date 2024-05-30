@@ -52,7 +52,7 @@ void ABaseCharacter::DisableMeshCollision() {
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-void ABaseCharacter::Die() {
+void ABaseCharacter::Die_Implementation() {
 	Tags.Add(FName("Dead"));
 	PlayDeathMontage();
 	SetWeaponCollision(ECollisionEnabled::NoCollision);

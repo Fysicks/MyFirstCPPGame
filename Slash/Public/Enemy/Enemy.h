@@ -36,7 +36,7 @@ protected:
 	/* </AActor> */
 
 	/* <ABaseCharacter> */
-	virtual void Die() override;
+	virtual void Die_Implementation() override;
 	void SpawnSoul();
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
@@ -45,7 +45,7 @@ protected:
 	virtual int32 PlayAttackMontage() override;
 	/* <ABaseCharacter> */
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 private:
 	/* AI Behavior */
@@ -90,13 +90,16 @@ private:
 	UPROPERTY()
 	AAIController* EnemyController;
 
-	UPROPERTY(EditAnywhere);
+	UPROPERTY(EditAnywhere, Category = Combat);
 	double CombatRadius = 1000.f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Combat)
 	double AttackRadius = 175.f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement Speeds")
+	UPROPERTY(EditAnywhere, Category = Combat)
+	double AcceptanceRadius = 50.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
 	float ChasingSpeed = 300.f;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
@@ -125,7 +128,7 @@ private:
 	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
 	TArray<AActor*> PatrolTargets;
 
-	UPROPERTY(EditAnywhere);
+	UPROPERTY(EditAnywhere, Category = "AI Navigation");
 	double PatrolRadius = 200.f;
 
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
@@ -133,7 +136,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "AI Navigation")
 	float PatrolWaitMax = 10.f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement Speeds")
+	UPROPERTY(EditAnywhere, Category = Combat)
 	float PatrollingSpeed = 125.f;
 
 };
